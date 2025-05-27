@@ -24,6 +24,7 @@ use crate::tunnel::server::{TlsServerConfig, WsServer, WsServerConfig};
 use crate::tunnel::transport::{TransportAddr, TransportScheme};
 use crate::tunnel::{RemoteAddr, to_host_port};
 use anyhow::{Context, anyhow};
+use executor::JoinSetTokioExecutor;
 use futures_util::future::BoxFuture;
 use hyper::header::HOST;
 use hyper::http::HeaderValue;
@@ -41,8 +42,9 @@ use url::Url;
 /// The outer error is a global setup error, the vec contains Results from the individual tunnels.
 /// FIXME: this should be two vec's which line up with the `local_to_remote` and `remote_to_local` vec's.
 /// FIXME: perhaps a better API would be one that set up a single tunnel so it could return a single error.
-pub async fn run_client(args: Client, executor: impl TokioExecutor) -> anyhow::Result<Vec<anyhow::Result<()>>> {
-    let tunnels = create_client_tunnels(args, executor.clone()).await?;
+pub async fn run_client(args: Client) -> anyhow::Result<Vec<anyhow::Result<()>>> {
+    let executor = JoinSetTokioExecutor::default();
+    let tunnels = create_client_tunnels(args, executor).await?;
     Ok(JoinSet::from_iter(tunnels).join_all().await)
 }
 

@@ -375,7 +375,8 @@ async fn create_client_tunnels(
     Ok(tunnels)
 }
 
-pub async fn run_server(args: Server, executor: impl TokioExecutor) -> anyhow::Result<()> {
+pub async fn run_server(args: Server) -> anyhow::Result<()> {
+    let executor = JoinSetTokioExecutor::default();
     let (tx, rx) = oneshot::channel();
     let exec = executor.clone();
     executor.spawn(async move {
